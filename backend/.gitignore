@@ -1,0 +1,17 @@
+# ─── Dependencies ────────────────────────────────────────────────────────────
+node_modules/
+
+# ─── Environment — contains DB credentials and JWT secret ────────────────────
+.env
+.env.local
+.env.production
+
+# ─── Generated PDF invoices (re-created at runtime) ──────────────────────────
+uploads/pdfs/*.pdf
+
+# ─── Puppeteer Chrome binary cache ───────────────────────────────────────────
+.cache/
+
+# ─── Logs ────────────────────────────────────────────────────────────────────
+*.log
+npm-debug.log*
