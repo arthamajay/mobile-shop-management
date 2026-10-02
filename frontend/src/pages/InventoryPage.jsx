@@ -39,8 +39,6 @@ export default function InventoryPage() {
   const [newImei, setNewImei] = useState('');
   const [filters, setFilters] = useState({ search: '', category: '', branch: '' });
 
-  const { register, handleSubmit, reset } = useForm();
-
   const loadProducts = useCallback(async () => {
     setLoading(true);
     try {

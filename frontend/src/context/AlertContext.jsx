@@ -39,7 +39,12 @@ export function AlertProvider({ children }) {
         const sseToken = await getSseToken();
         if (cancelled) return;
 
-        const url = `/api/sse/alerts?token=${sseToken}`;
+        // EventSource cannot set custom headers, so we use a short-lived SSE token
+        // in the URL instead of the primary JWT.
+        // The full backend URL must be explicit — a relative /api path would hit
+        // the Vercel frontend origin, not the Render backend.
+        const backendBase = import.meta.env.VITE_BASE_URL;
+        const url = `${backendBase}/api/sse/alerts?token=${sseToken}`;
         const es = new EventSource(url);
         eventSourceRef.current = es;
 

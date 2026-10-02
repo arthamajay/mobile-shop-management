@@ -237,7 +237,7 @@ export default function BillingPage() {
 
             {selected.pdfUrl && (
               <a
-                href={`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001'}${selected.pdfUrl}`}
+                href={`${import.meta.env.VITE_BASE_URL}${selected.pdfUrl}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 text-sm text-primary-600 hover:underline"
