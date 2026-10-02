@@ -174,11 +174,7 @@ Open [http://localhost:3000](http://localhost:3000)
 | `MONGO_URI` | Yes | MongoDB Atlas connection string |
 | `JWT_SECRET` | Yes | Min 32 chars random string (64+ recommended) |
 | `FRONTEND_URL` | Yes | CORS allowed origin (e.g. `http://localhost:3000`) |
-| `WHATSAPP_API_URL` | No | WhatsApp Business API endpoint |
-| `WHATSAPP_API_TOKEN` | No | WhatsApp API token |
 | `SEED_ADMIN_PASSWORD` | Seed only | Password used by `scripts/seedAdmin.js` |
-| `SEED_ADMIN_EMAIL` | No | Override seed admin email |
-| `SEED_ADMIN_NAME` | No | Override seed admin name |
 
 Generate a strong `JWT_SECRET`:
 ```bash
@@ -190,27 +186,6 @@ node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 | Variable | Required | Description |
 |---|---|---|
 | `VITE_API_BASE_URL` | Yes | Backend base URL for direct asset links (PDF downloads) |
-
----
-
-## First-Time Setup (Seed Admin)
-
-The seed script creates the initial admin account. It is **idempotent** — safe to run multiple times.
-
-```bash
-# Minimal usage
-SEED_ADMIN_PASSWORD=MyStrongPass123 node backend/scripts/seedAdmin.js
-
-# With custom email/name
-SEED_ADMIN_EMAIL=owner@myshop.com \
-SEED_ADMIN_NAME="Shop Owner" \
-SEED_ADMIN_PASSWORD=MyStrongPass123 \
-node backend/scripts/seedAdmin.js
-```
-
-Additional salesperson accounts are created from the **Staff** page in the web UI (admin only).
-
----
 
 ## User Roles & Permissions
 
@@ -316,15 +291,7 @@ All endpoints are prefixed with `/api`.
 
 1. Set `NODE_ENV=production` in your environment
 2. Set all required env vars (see [Environment Variables](#environment-variables))
-3. Run the seed script once: `SEED_ADMIN_PASSWORD=... node scripts/seedAdmin.js`
-4. Start: `npm start` (or use PM2: `pm2 start server.js`)
-
-**PM2 example:**
-```bash
-pm2 start backend/server.js --name vamshi-backend
-pm2 save
-pm2 startup
-```
+3. Start: `npm start` (or use PM2: `pm2 start server.js`)
 
 ### Frontend
 
@@ -338,75 +305,4 @@ echo "VITE_API_BASE_URL=https://api.yourshop.com" > .env.production
 npm run build
 # Output is in frontend/dist/ — serve with Nginx, Vercel, Netlify, etc.
 ```
-
-### Nginx reverse proxy (example)
-
-```nginx
-server {
-    listen 80;
-    server_name yourshop.com;
-
-    # Serve frontend build
-    root /var/www/vamshi-frontend/dist;
-    index index.html;
-    try_files $uri $uri/ /index.html;
-
-    # Proxy API calls to backend
-    location /api/ {
-        proxy_pass http://localhost:5001;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-
-        # SSE — disable buffering
-        proxy_set_header Connection '';
-        proxy_buffering off;
-        proxy_cache off;
-        chunked_transfer_encoding on;
-    }
-
-    # Serve generated PDFs directly
-    location /uploads/ {
-        alias /var/www/vamshi-backend/uploads/;
-    }
-}
-```
-
-> **Note:** For production, consider storing generated PDFs in object storage (S3, GCS) and serving them via signed URLs rather than from the server's filesystem.
-
 ---
-
-## Security Notes
-
-- **JWT secret** must be a long random string (≥ 64 chars) in production
-- **MongoDB credentials** must never be committed — rotate the Atlas password if `.env` was ever pushed to version control
-- **Rate limiting** is applied to the login endpoint (10 attempts per IP per 15 minutes)
-- **Helmet** sets secure HTTP headers on all responses
-- **SSE** uses short-lived (60 s) tokens to keep the primary JWT out of URLs and server logs
-- **PDF files** under `/uploads/pdfs/` are currently publicly accessible by URL — consider adding authentication or moving to object storage for sensitive invoices
-- **In-memory user cache** (5-min TTL) is process-local — in a multi-instance deployment, deactivation may take up to 5 minutes to propagate to all instances. Use Redis for a shared cache if running multiple processes.
-- The `uploads/` directory should be excluded from version control (add to `.gitignore`)
-
----
-
-## .gitignore Recommendations
-
-Ensure your `.gitignore` includes:
-
-```
-# Environment files
-backend/.env
-frontend/.env
-frontend/.env.production
-
-# Generated files
-backend/uploads/pdfs/
-
-# Dependencies
-node_modules/
-
-# Build output
-frontend/dist/
-```
